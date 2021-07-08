@@ -3,6 +3,7 @@
 // on strings to generate an object of the implementor type.
 // You can read more about it at https://doc.rust-lang.org/std/str/trait.FromStr.html
 use std::error;
+use std::fmt;
 use std::str::FromStr;
 
 #[derive(Debug)]
@@ -10,8 +11,6 @@ struct Person {
     name: String,
     age: usize,
 }
-
-// I AM NOT DONE
 
 // Steps:
 // 1. If the length of the provided string is 0, an error should be returned
@@ -23,9 +22,48 @@ struct Person {
 // 5. If while extracting the name and the age something goes wrong, an error should be returned
 // If everything goes well, then return a Result of a Person object
 
+#[derive(Debug)]
+struct CreationError;
+
+impl fmt::Display for CreationError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "CreationError")
+    }
+}
+
+impl error::Error for CreationError {}
+
 impl FromStr for Person {
     type Err = Box<dyn error::Error>;
     fn from_str(s: &str) -> Result<Person, Self::Err> {
+        if s.len() == 0 {
+            return Err(Box::new(CreationError {}));
+        }
+        let mut person = Person {
+            name: String::from(""),
+            age: 1,
+        };
+        let split_arr = s.split(',').collect::<Vec<&str>>();
+        if split_arr.len() != 2 {
+            return Err(Box::new(CreationError {}));
+        }
+        let mut it = split_arr.iter();
+        if let Some(name) = it.next() {
+            if name.len() > 0 {
+                person.name = String::from(*name);
+            } else {
+                return Err(Box::new(CreationError {}));
+            }
+        }
+
+        if let Some(age) = it.next() {
+            if let Ok(num) = age.parse::<usize>() {
+                person.age = num;
+            } else {
+                return Err(Box::new(CreationError {}));
+            }
+        }
+        Ok(person)
     }
 }
 
